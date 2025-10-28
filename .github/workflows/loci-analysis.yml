@@ -15,9 +15,8 @@ jobs:
     steps:
       - name: Checkout 'FreeRTOS' repository
         uses: actions/checkout@v5
-      
-      - name: Checkout 'FreeRTOS' submodules
-        run: git submodule update --checkout --init --depth 1 CMSIS_6 mbed-os FreeRTOS/Source
+        with:
+          submodules: recursive # Fetch submodules
 
       - name: Install GNU ARM Toolchain
         shell: bash
