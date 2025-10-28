@@ -1,12 +1,12 @@
 name: LOCI Integration Demo
 on:
   workflow_dispatch:
-    inputs:
-      branch:
-        description: 'Branch to checkout'
-        required: true
-        default: 'main'
-        type: string
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+    branches: [ main ]
+  push:
+    branches: [ main ]
+
 
 jobs:  
   FREERTOS-LOCI:
