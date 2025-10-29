@@ -24,9 +24,9 @@ jobs:
           sudo apt-get -y update
           sudo apt-get -y install gcc-arm-none-eabi build-essential cmake git ninja-build python3-minimal
 
-      - name: Build CORTEX_MPU_M4_MPS2_QEMU_GCC Demo
+      - name: Build CORTEX_MPU_M3_MPS2_QEMU_GCC Demo
         shell: bash
-        working-directory: FreeRTOS/Demo/CORTEX_MPU_M4_MPS2_QEMU_GCC
+        working-directory: FreeRTOS/Demo/CORTEX_MPU_M3_MPS2_QEMU_GCC
         run: make -j
   
       - name: FreeRTOS demo (upload)
@@ -36,9 +36,9 @@ jobs:
           LOCI_API_KEY: '${{ secrets.LOCI_DEV_AGENTIC_API_KEY }}'
         with:
           mode: upload
-          project: FreeRTOS CM4
+          project: FreeRTOS CM3
           binaries: |
-                FreeRTOS/Demo/CORTEX_MPU_M4_MPS2_QEMU_GCC/build/RTOSDemo.axf
+                FreeRTOS/Demo/CORTEX_MPU_M3_MPS2_QEMU_GCC/build/RTOSDemo.axf
 
       - name: FreeRTOS demo (summary)
         uses: auroralabs-loci/loci-action@v1.0.1
@@ -47,4 +47,4 @@ jobs:
           LOCI_API_KEY: '${{ secrets.LOCI_DEV_AGENTIC_API_KEY }}'
         with:
           mode: summary
-          project: FreeRTOS CM4
+          project: FreeRTOS CM3
