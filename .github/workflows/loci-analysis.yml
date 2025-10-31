@@ -44,7 +44,7 @@ jobs:
             COMMIT="${{ github.event.pull_request.head.sha }}"
           else
             # workflow_dispatch - get actual checked out commit
-            BRANCH="${{ inputs.branch || 'main' }}"
+            BRANCH="${{ inputs.branch }}"
             COMMIT=$(git rev-parse --short HEAD)
             # workaround for loci-action using 7 characters for commit sha
             COMMIT=${COMMIT:0:7}
