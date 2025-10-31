@@ -31,6 +31,26 @@ jobs:
           fetch-depth: 0
           submodules: recursive
 
+      - name: Determine target branch and commit
+        id: target
+        run: |
+          if [ "${{ github.event_name }}" == "pull_request_target" ]; then
+            BRANCH="${{ github.event.pull_request.head.ref }}"
+            COMMIT="${{ github.event.pull_request.head.sha }}"
+          else
+            # workflow_dispatch - get actual checked out commit
+            BRANCH="${{ inputs.branch || 'main' }}"
+            COMMIT=$(git rev-parse --abbrev HEAD)
+            # workaround for loci-action using 7 characters for commit sha
+            COMMIT=${COMMIT:0:7}
+          fi
+
+          echo "branch=${BRANCH}" >> $GITHUB_OUTPUT
+          echo "commit=${COMMIT}" >> $GITHUB_OUTPUT
+          echo "ref=${BRANCH}@${COMMIT}" >> $GITHUB_OUTPUT
+
+          echo "> Target: ${BRANCH}@${COMMIT}"
+
       - name: Install GNU ARM Toolchain
         shell: bash
         run: |
@@ -47,6 +67,7 @@ jobs:
         with:
           mode: upload
           project: '${{ env.LOCI_PROJECT }}'
+          target: '${{ steps.target.outputs.ref }}'
           binaries: |
             FreeRTOS/Demo/CORTEX_MPU_M3_MPS2_QEMU_GCC/build/RTOSDemo.axf
           wait-base: 'true'
@@ -58,4 +79,5 @@ jobs:
         with:
           mode: summary
           project: '${{ env.LOCI_PROJECT }}'
+          target: '${{ steps.target.outputs.ref }}'
           wait-base: 'true'
