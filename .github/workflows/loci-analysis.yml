@@ -12,6 +12,14 @@ jobs:
   FREERTOS-LOCI:
     name: FreeRTOS with LOCI
     runs-on: ubuntu-latest
+    
+    env:
+      LOCI_PROJECT: FreeRTOS CM3
+      LOCI_API_KEY: '${{ secrets.LOCI_API_KEY }}'
+      LOCI_BACKEND_URL: '${{ vars.LOCI_BACKEND_URL }}'
+    
+    environment: ${{ vars.LOCI_ENV || 'PROD__AL_DEMO' }}
+
     steps:
       - name: Checkout 'FreeRTOS' repository
         uses: actions/checkout@v5
@@ -31,20 +39,18 @@ jobs:
   
       - name: FreeRTOS demo (upload)
         uses: auroralabs-loci/loci-action@v1.0.1
-        env:
-          LOCI_BACKEND_URL: '${{ vars.LOCI_DEV_BACKEND_URL }}'
-          LOCI_API_KEY: '${{ secrets.LOCI_DEV_AGENTIC_API_KEY }}'
         with:
           mode: upload
-          project: FreeRTOS CM3
+          project: '${{ env.LOCI_PROJECT }}'
           binaries: |
                 FreeRTOS/Demo/CORTEX_MPU_M3_MPS2_QEMU_GCC/build/RTOSDemo.axf
+          wait-base: 'true'
 
       - name: FreeRTOS demo (summary)
         uses: auroralabs-loci/loci-action@v1.0.1
         env:
-          LOCI_BACKEND_URL: '${{ vars.LOCI_DEV_BACKEND_URL }}'
-          LOCI_API_KEY: '${{ secrets.LOCI_DEV_AGENTIC_API_KEY }}'
+          LOCI_GITHUB_TOKEN: '${{ secrets.REPO_READ_ONLY_PAT }}' 
         with:
           mode: summary
-          project: FreeRTOS CM3
+          project: '${{ env.LOCI_PROJECT }}'
+          wait-base: 'true'
