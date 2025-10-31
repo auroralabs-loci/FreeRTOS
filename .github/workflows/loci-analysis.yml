@@ -1,23 +1,26 @@
 name: LOCI Integration Demo
 on:
   workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to build'
+        required: false
+        default: 'main'
+        type: string
   pull_request_target:
     types: [opened, synchronize, reopened]
     branches: [ main ]
-  push:
-    branches: [ main ]
 
-
-jobs:  
-  FREERTOS-LOCI:
+jobs:
+  build-and-analyze:
     name: FreeRTOS with LOCI
     runs-on: ubuntu-latest
-    
+
     env:
       LOCI_PROJECT: FreeRTOS CM3
       LOCI_API_KEY: '${{ secrets.LOCI_API_KEY }}'
       LOCI_BACKEND_URL: '${{ vars.LOCI_BACKEND_URL }}'
-    
+
     environment: ${{ vars.LOCI_ENV || 'PROD__AL_DEMO' }}
 
     steps:
@@ -36,20 +39,20 @@ jobs:
         shell: bash
         working-directory: FreeRTOS/Demo/CORTEX_MPU_M3_MPS2_QEMU_GCC
         run: make -j
-  
+
       - name: FreeRTOS demo (upload)
         uses: auroralabs-loci/loci-action@v1.0.1
         with:
           mode: upload
           project: '${{ env.LOCI_PROJECT }}'
           binaries: |
-                FreeRTOS/Demo/CORTEX_MPU_M3_MPS2_QEMU_GCC/build/RTOSDemo.axf
+            FreeRTOS/Demo/CORTEX_MPU_M3_MPS2_QEMU_GCC/build/RTOSDemo.axf
           wait-base: 'true'
 
       - name: FreeRTOS demo (summary)
         uses: auroralabs-loci/loci-action@v1.0.1
         env:
-          LOCI_GITHUB_TOKEN: '${{ secrets.REPO_READ_ONLY_PAT }}' 
+          LOCI_GITHUB_TOKEN: '${{ secrets.REPO_READ_ONLY_PAT }}'
         with:
           mode: summary
           project: '${{ env.LOCI_PROJECT }}'
