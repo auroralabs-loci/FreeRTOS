@@ -25,36 +25,36 @@ jobs:
           ref: ${{ env.MAIN_BRANCH }}
           fetch-depth: 0
 
-      - name: Get current MAIN_BRANCH commit
+      - name: Get current ${{ env.MAIN_BRANCH }} commit
         id: before
         shell: bash -euo pipefail {0}
         run: |
           echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
 
-      - name: Sync MAIN_BRANCH with upstream
+      - name: Sync ${{ env.MAIN_BRANCH }} with upstream
         shell: bash -euo pipefail {0}
         run: |
           echo "> Add upstream remote"
-          git remote add upstream https://github.com/${UPSTREAM_REPO} || true
+          git remote add upstream https://github.com/$UPSTREAM_REPO || true
           echo "> Fetch upstream changes"
           git fetch upstream
-          echo "> Update MAIN_BRANCH with upstream default branch"
-          git rev-parse --abbrev-ref upstream/HEAD
+          upstream_default_branch=$(git rev-parse --abbrev-ref upstream/HEAD)
+          echo "> Update $MAIN_BRANCH with upstream $upstream_default_branch branch"
           git merge upstream/HEAD --ff-only
-          git push origin main
+          git push origin $MAIN_BRANCH
 
-      - name: Get updated MAIN_BRANCH commit
+      - name: Get updated ${{ env.MAIN_BRANCH }} commit
         id: after
         shell: bash -euo pipefail {0}
         run: |
           echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
 
-      - name: Check if MAIN_BRANCH was updated
+      - name: Check if ${{ env.MAIN_BRANCH }} was updated
         id: check
         run: |
           if [ "${{ steps.before.outputs.sha }}" != "${{ steps.after.outputs.sha }}" ]; then
             echo "updated=true" >> $GITHUB_OUTPUT
-            echo "> $ branch was updated"
+            echo "> $MAIN_BRANCH was updated"
           else
             echo "updated=false" >> $GITHUB_OUTPUT
             echo "> No changes from upstream"
@@ -66,5 +66,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         shell: bash -euo pipefail {0}
         run: |
-          echo "> Run LCOI analysis workflow"
-          gh workflow run loci-analysis.yml --ref overlay -f branch=main
+          gh workflow run \
+            --repo ${{ github.repository }} \
+            --ref overlay \
+            -f branch=$MAIN_BRANCH \
+            loci-analysis.yml
