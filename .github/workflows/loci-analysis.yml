@@ -29,7 +29,11 @@ jobs:
         with:
           ref: ${{ inputs.branch || github.event.pull_request.head.sha }}
           fetch-depth: 0
-          submodules: recursive
+
+      - name: Checkout required submodules
+        shell: bash
+        run: |
+          git submodule update --checkout --init --depth 1 FreeRTOS/Source
 
       - name: Determine target branch and commit
         id: target
