@@ -25,34 +25,31 @@ jobs:
           ref: ${{ env.MAIN_BRANCH }}
           fetch-depth: 0
 
-      - name: Get current ${{ env.MAIN_BRANCH }} commit
+      - name: Get last synced upstream commit (main~1)
         id: before
         shell: bash -euo pipefail {0}
         run: |
-          echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+          # Last synced upstream commit is the parent of main (main~1)
+          echo "sha=$(git rev-parse HEAD~1)" >> $GITHUB_OUTPUT
 
-      - name: Sync ${{ env.MAIN_BRANCH }} with upstream
+      - name: Get updated upstream commit
+        id: fetch
         shell: bash -euo pipefail {0}
         run: |
           echo "> Add upstream remote"
           git remote add upstream https://github.com/$UPSTREAM_REPO || true
+
           echo "> Fetch upstream changes"
           git fetch upstream
-          upstream_default_branch=$(git rev-parse --abbrev-ref upstream/HEAD)
-          echo "> Update $MAIN_BRANCH with upstream $upstream_default_branch branch"
-          git merge upstream/HEAD --ff-only
-          git push origin $MAIN_BRANCH
 
-      - name: Get updated ${{ env.MAIN_BRANCH }} commit
-        id: after
-        shell: bash -euo pipefail {0}
-        run: |
-          echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+          # Current upstream commit of the default branch
+          echo "sha=$(git rev-parse upstream/HEAD)" >> $GITHUB_OUTPUT
 
       - name: Check if ${{ env.MAIN_BRANCH }} was updated
         id: check
+        shell: bash -euo pipefail {0}
         run: |
-          if [ "${{ steps.before.outputs.sha }}" != "${{ steps.after.outputs.sha }}" ]; then
+          if [ "${{ steps.before.outputs.sha }}" != "${{ steps.fetch.outputs.sha }}" ]; then
             echo "updated=true" >> $GITHUB_OUTPUT
             echo "> $MAIN_BRANCH was updated"
           else
@@ -60,14 +57,21 @@ jobs:
             echo "> No changes from upstream"
           fi
 
-      - name: Trigger loci-analysis workflow
+      - name: Sync ${{ env.MAIN_BRANCH }} with upstream and apply overlay
         if: steps.check.outputs.updated == 'true'
-        env:
-          GH_TOKEN: ${{ github.token }}
         shell: bash -euo pipefail {0}
         run: |
-          gh workflow run \
-            --repo ${{ github.repository }} \
-            --ref overlay \
-            -f branch=$MAIN_BRANCH \
-            loci-analysis.yml
+          echo "> Reset $MAIN_BRANCH to upstream: ${{ steps.fetch.outputs.sha }}"
+          git reset --hard ${{ steps.fetch.outputs.sha }}
+
+          echo "> Overlay .github directory from overlay branch"
+          git checkout overlay -- .github
+
+          echo "> Commit overlay"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .github
+          git commit -m "Apply workflow overlay from overlay branch [skip ci]"
+
+          echo "> Force push to origin/$MAIN_BRANCH"
+          git push -f origin $MAIN_BRANCH
