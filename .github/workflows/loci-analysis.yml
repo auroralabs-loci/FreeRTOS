@@ -13,6 +13,10 @@ on:
   push:
     branches: [ main ]
 
+defaults:
+  run:
+    shell: bash -euo pipefail {0}
+
 jobs:
   build-and-analyze:
     name: FreeRTOS with LOCI
@@ -33,12 +37,10 @@ jobs:
           fetch-depth: 0
 
       - name: Checkout required submodules
-        shell: bash
         run: |
           git submodule update --checkout --init --depth 1 FreeRTOS/Source
 
       - name: Install GNU ARM Toolchain
-        shell: bash
         run: |
           sudo apt-get -y update
           sudo apt-get -y install gcc-arm-none-eabi build-essential cmake git ninja-build python3-minimal
