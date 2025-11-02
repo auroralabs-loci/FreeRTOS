@@ -65,7 +65,7 @@ jobs:
           git reset --hard ${{ steps.fetch.outputs.sha }}
 
           echo "> Overlay .github directory from overlay branch"
-          git checkout origin/overlay -- .github
+          git restore --source origin/overlay .github
 
           echo "> Commit overlay"
           git config user.name "github-actions[bot]"
