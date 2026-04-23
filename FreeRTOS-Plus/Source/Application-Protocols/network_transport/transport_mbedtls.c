@@ -599,11 +599,16 @@ static TlsTransportStatus_t tlsHandshake( NetworkContext_t * pNetworkContext,
     if( returnStatus == TLS_TRANSPORT_SUCCESS )
     {
         /* Perform the TLS handshake. */
+        TickType_t handshakeTimeoutTicks = pdMS_TO_TICKS( 10000 );
+        TimeOut_t handshakeStart;
+        vTaskSetTimeOutState( &handshakeStart );
+
         do
         {
             mbedtlsError = mbedtls_ssl_handshake( &( pTlsTransportParams->sslContext.context ) );
-        } while( ( mbedtlsError == MBEDTLS_ERR_SSL_WANT_READ ) ||
-                 ( mbedtlsError == MBEDTLS_ERR_SSL_WANT_WRITE ) );
+        } while( ( ( mbedtlsError == MBEDTLS_ERR_SSL_WANT_READ ) ||
+                   ( mbedtlsError == MBEDTLS_ERR_SSL_WANT_WRITE ) ) &&
+                 ( xTaskCheckForTimeOut( &handshakeStart, &handshakeTimeoutTicks ) == pdFALSE ) );
 
         if( mbedtlsError != 0 )
         {
